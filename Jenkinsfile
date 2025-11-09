@@ -1,3 +1,7 @@
+properties([
+    githubProjectProperty(disableGitHubNotifications: true)
+])
+
 pipeline {
     agent any
 
