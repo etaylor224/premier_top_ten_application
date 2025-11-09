@@ -38,6 +38,12 @@
         <option value="">All</option>
       </select>
     </div>
+    <div class="col-md-2">
+      <label class="form-label">Tournament</label>
+      <select name="tournament" class="form-select">
+        <option value="">All</option>
+      </select>
+    </div>
     <div class="col-md-3">
       <label class="form-label">Search by First Name</label>
       <input type="text" name="fname" class="form-control" placeholder="First name">
@@ -82,7 +88,8 @@
     division: { endpoint: "/api/divisions", keys: ["division", "name"] },
     event_name: { endpoint: "/api/events", keys: ["event", "name"] },
     school: { endpoint: "/api/schools", keys: ["school", "name"] },
-    rank: { endpoint: "/api/belt_ranks", keys: ["belt_rank", "rank", "name"] }
+    rank: { endpoint: "/api/belt_ranks", keys: ["belt_rank", "rank", "name"] },
+    tournament: {endpoint: "/api/tournaments", keys: ["tournament", "tourn_year"] }
   };
 
   // Helper to safely get first matching key

@@ -1,5 +1,6 @@
 import datetime
 import psycopg2 as pg
+from config import db_url
 
 class TotalPoints:
     fname: str
@@ -22,6 +23,7 @@ def populate_top_ten(request=None):
     belt_rank = request.args.get("belt_rank")
     fname = request.args.get("fname")
     lname = request.args.get("lname")
+    tournament = request.args.get("tournament")
 
     values = list()
 
@@ -59,6 +61,9 @@ def populate_top_ten(request=None):
     if belt_rank:
         query += " AND ranks.belt_rank = %s"
         values.append(belt_rank)
+    if tournament:
+        query += " AND tournament.tournament = %s"
+        values.append(tournament)
     if lname:
         query += " AND top_ten.lname ilike(%s)"
         values.append(lname)
@@ -67,14 +72,14 @@ def populate_top_ten(request=None):
         values.append(fname)
 
     if values:
-        with pg.connect(_db_url) as conn:
+        with pg.connect(db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(query, values)
                 data = cur.fetchall()
                 return data
 
     else:
-        with pg.connect(_db_url) as conn:
+        with pg.connect(db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(query)
                 data = cur.fetchall()
@@ -96,7 +101,7 @@ def two_column_helper(data):
     return cleaned
 
 def get_tournaments():
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT id, tournament FROM tournament")
             data = cur.fetchall()
@@ -117,7 +122,7 @@ def tournament_helper(data):
     return cleaned
 
 def get_all_tournaments():
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM tournament")
             data = cur.fetchall()
@@ -154,7 +159,7 @@ def add_new_tourn_data(data:dict):
     %s,
     (select id from tournament where tournament = %s))
     """
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(query, (data['division'],
                                 data['fname'],
@@ -192,7 +197,7 @@ def top_ten_data_helper(data):
     return cleaned
 
 def updated_insert(data, tourn, tourn_points):
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO top_ten_main (
@@ -229,7 +234,7 @@ def updated_insert(data, tourn, tourn_points):
 
 
 def insertalldata(data):
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(
             """
@@ -258,7 +263,7 @@ def insertalldata(data):
         conn.commit()
 
 def insert_points(fname, lname, event, tourn, points):
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(    """
             INSERT INTO top_ten_main (
@@ -286,7 +291,7 @@ def total_points():
     query = """
     SELECT division_id, fname, lname, rank_id, event_id, tourn_id, tourn_pts, total_pts FROM top_ten_main
     """
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(query)
             x = cur.fetchall()
@@ -313,7 +318,7 @@ def get_divisions():
     query = """
     SELECT * from division    
     """
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(query)
             return cur.fetchall()
@@ -322,13 +327,13 @@ def get_events():
     query = """
     SELECT * from events   
     """
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(query)
             return cur.fetchall()
 
 def get_schools():
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM schools")
             return cur.fetchall()
@@ -349,7 +354,7 @@ def school_data_helper(data):
     return cleaned
 
 def get_belt_ranks():
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM ranks")
             return cur.fetchall()
@@ -373,7 +378,7 @@ def update_rank(event, matches):
     TotalPoints.top_ten_rank = 1
 
     for row in matches:
-        with pg.connect(_db_url) as conn:
+        with pg.connect(db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                 UPDATE top_ten_main
@@ -396,7 +401,7 @@ def rank():
         for event_entry in events:
             TotalPoints.event_id = event_entry[0]
             TotalPoints.top_ten_rank = 1
-            with pg.connect(_db_url) as conn:
+            with pg.connect(db_url) as conn:
                 with conn.cursor() as cur:
                     cur.execute(query + "WHERE division_id = %s and event_id = %s ORDER BY total_pts DESC", (TotalPoints.division_id, TotalPoints.event_id))
                     matches = cur.fetchall()
@@ -444,7 +449,7 @@ def admin_update(table, row_id, value):
             """
         values = (value["tournament"], row_id)
 
-    with pg.connect(_db_url) as conn:
+    with pg.connect(db_url) as conn:
         with conn.cursor() as cur:
             cur.execute(query, values)
         conn.commit()
