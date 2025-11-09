@@ -21,13 +21,32 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 sh '''
+                set -e  # exit immediately if a command fails
+
+                # Create virtual environment if it doesn't exist
                 if [ ! -d "${VENV_DIR}" ]; then
+                    echo "Creating virtual environment..."
                     ${PYTHON} -m venv ${VENV_DIR}
                 fi
-                . ${VENV_DIR}/bin/activate
-                pip install --upgrade pip
-                if [ -f requirements.txt ]; then
-                    pip install -r requirements.txt
+
+                # Check if activate script exists
+                if [ -f "${VENV_DIR}/bin/activate" ]; then
+                    echo "Activating virtual environment..."
+                    . ${VENV_DIR}/bin/activate
+
+                    # Upgrade pip
+                    pip install --upgrade pip
+
+                    # Install dependencies if requirements.txt exists
+                    if [ -f requirements.txt ]; then
+                        echo "Installing dependencies..."
+                        pip install -r requirements.txt
+                    else
+                        echo "No requirements.txt found."
+                    fi
+                else
+                    echo "❌ Virtual environment creation failed!"
+                    exit 1
                 fi
                 '''
             }
@@ -36,24 +55,32 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                . ${VENV_DIR}/bin/activate
-                if [ -d "tests" ]; then
-                    echo "Running tests..."
-                    pytest --maxfail=1 --disable-warnings -q || true
+                # Activate the virtual environment
+                if [ -f "${VENV_DIR}/bin/activate" ]; then
+                    . ${VENV_DIR}/bin/activate
+
+                    # Run tests if tests directory exists
+                    if [ -d "tests" ]; then
+                        echo "Running tests..."
+                        pytest --maxfail=1 --disable-warnings -q || true
+                    else
+                        echo "No tests found."
+                    fi
                 else
-                    echo "No tests found."
+                    echo "❌ Virtual environment not found. Skipping tests."
                 fi
                 '''
             }
         }
+
     }
 
     post {
         success {
-            echo "Pipeline completed successfully!"
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
-            echo "Pipeline failed. Check logs."
+            echo "❌ Pipeline failed. Check logs."
         }
     }
 }
