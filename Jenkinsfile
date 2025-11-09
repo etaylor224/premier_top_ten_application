@@ -1,7 +1,3 @@
-properties([
-    githubProjectProperty(disableGitHubNotifications: true)
-])
-
 pipeline {
     agent any
 
@@ -51,6 +47,7 @@ pipeline {
                 '''
             }
         }
+    }  // ✅ closes 'stages'
 
     post {
         success {
